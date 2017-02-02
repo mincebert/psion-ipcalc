@@ -1,0 +1,107 @@
+IPSUBNET:
+REM 0.33 2016-12-16
+GLOBAL ip%(4)
+LOCAL exist%,addr%(4),masklen%,addr$(15),octet%,mask%(4),mask$(15),menu$(200),addrs,addrs$(4),choice%,bit%,found%
+exist%=EXIST("A:IPSUBNET")
+IF exist%
+ OPEN "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%
+ addr%(1)=A.addr1%
+ addr%(2)=A.addr2%
+ addr%(3)=A.addr3%
+ addr%(4)=A.addr4%
+ masklen%=A.masklen%
+ CLOSE
+ELSE
+ addr%(1)=192
+ addr%(2)=168
+ addr%(3)=100
+ addr%(4)=1
+ masklen%=23
+ENDIF
+DO
+ PRINT "Busy..."
+ addr$=IPSTR$:(addr%(1),addr%(2),addr%(3),addr%(4))
+ menu$="IP   "+addr$
+ octet%=1
+ DO
+  mask%(octet%)=256-2**MIN(MAX(octet%*8-masklen%,0),8)
+  octet%=octet%+1
+ UNTIL octet%>4
+ mask$=IPSTR$:(mask%(1),mask%(2),mask%(3),mask%(4))
+ menu$=menu$+",Mask "+mask$
+ addrs=2.0**(32-masklen%)
+ IF addrs>1E9
+  addrs$=GEN$(INT(addrs/1E9),3)+"B"
+ ELSEIF addrs>1E6
+  addrs$=GEN$(INT(addrs/1E6),3)+"M"
+ ELSEIF addrs>1E4
+  addrs$=GEN$(INT(addrs/1E3),3)+"k"
+ ELSE
+  addrs$=GEN$(INT(addrs+0.5),4)
+ ENDIF
+ menu$=menu$+",Len  /"+GEN$(masklen%,2)+"  "+addrs$+" addr"
+ IF addrs>1
+  menu$=menu$+"s"
+ ENDIF
+ octet%=1
+ DO
+  ip%(octet%)=addr%(octet%) AND mask%(octet%)
+  octet%=octet%+1
+ UNTIL octet%>4
+ menu$=menu$+",=net "+IPSTR$:(ip%(1),ip%(2),ip%(3),ip%(4))
+ octet%=1
+ DO
+  ip%(octet%)=addr%(octet%) OR (255-mask%(octet%))
+  octet%=octet%+1
+ UNTIL octet%>4
+ menu$=menu$+",=b/c "+IPSTR$:(ip%(1),ip%(2),ip%(3),ip%(4))
+ KEY
+ choice%=MENU(menu$)
+ IF choice%=1
+  IPINPUT:("IP address",addr$)
+  octet%=1
+  DO
+   addr%(octet%)=ip%(octet%)
+   octet%=octet%+1
+  UNTIL octet%>4
+ ELSEIF choice%=2
+  IPINPUT:("Netmask",mask$)
+  masklen%=32
+  octet%=4
+  found%=0
+  DO
+   bit%=0
+   DO
+    found%=(ip%(octet%) AND INT(2**bit%))<>0
+    IF NOT(found%)
+     masklen%=masklen%-1
+     bit%=bit%+1
+    ENDIF
+   UNTIL found% OR (bit%>7)
+   octet%=octet%-1
+  UNTIL octet%<1
+ ELSEIF choice%=3
+  PRINT "Netmask length"+CHR$(63)
+  INPUT masklen%
+  masklen%=MIN(MAX(masklen%,0),32)
+ ELSEIF choice%<>0
+  PRINT "Not editable."
+  PAUSE -10
+ ENDIF  
+UNTIL choice%=0
+IF exist%
+ OPEN "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%
+ELSE
+ CREATE "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%
+ENDIF
+A.addr1%=addr%(1)
+A.addr2%=addr%(2)
+A.addr3%=addr%(3)
+A.addr4%=addr%(4)
+A.masklen%=masklen%
+IF exist%
+ UPDATE
+ELSE
+ APPEND
+ENDIF
+CLOSE

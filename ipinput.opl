@@ -1,0 +1,37 @@
+IPINPUT:(prompt$,default$)
+REM 1.22 2016-12-16
+LOCAL ip$(15),octet%,dot%
+inloop::
+PRINT prompt$;CHR$(63)
+KSTAT 3
+ip$=default$
+EDIT ip$
+octet%=1
+DO
+ dot%=LOC(ip$,".")
+ IF dot%>0
+  ONERR inerr::
+  ip%(octet%)=MIN(MAX(VAL(LEFT$(ip$,dot%-1)),0),255)
+  ONERR OFF
+  IF dot%<LEN(ip$)
+   ip$=RIGHT$(ip$,LEN(ip$)-dot%)
+  ELSE
+   ip$=""
+  ENDIF
+ ELSE
+  ip%(octet%)=0
+ ENDIF
+ octet%=octet%+1
+UNTIL octet%>3
+ONERR inerr::
+ip%(octet%)=VAL(ip$)
+ONERR OFF
+RETURN
+inerr::
+ONERR OFF
+IF ERR=252
+ PRINT "Error: invalid IP."
+ELSE
+ RAISE ERR
+ENDIF
+GOTO inloop::

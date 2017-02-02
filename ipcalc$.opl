@@ -1,0 +1,17 @@
+IPCALC$:(offset%)
+REM 0.3 2016-12-19
+LOCAL addrs,octet%
+addrs=2.0**(32-masklen%)
+IF ABS(offset%)>addrs
+ RETURN "***"
+ENDIF
+octet%=1
+DO
+ ip%(octet%)=net%(octet%)
+ IF offset%<0
+  ip%(octet%)=ip%(octet%) OR (255-mask%(octet%))
+ ENDIF
+ octet%=octet%+1
+UNTIL octet%>4
+ip%(4)=ip%(4)+offset%-(offset%<0)
+RETURN IPSTR$:(ip%(1),ip%(2),ip%(3),ip%(4))
