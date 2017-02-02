@@ -1,9 +1,9 @@
 IPCALC$:(offset%)
-REM 0.3 2016-12-19
+REM 0.31 2017-01-07
 LOCAL addrs,octet%
 addrs=2.0**(32-masklen%)
 IF ABS(offset%)>addrs
- RETURN "***"
+ RETURN "*****"
 ENDIF
 octet%=1
 DO

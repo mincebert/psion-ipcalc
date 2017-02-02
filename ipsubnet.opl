@@ -1,7 +1,7 @@
 IPSUBNET:
-REM 0.47 2016-12-19
+REM 0.49 2017-01-07
 GLOBAL net%(4),mask%(4),masklen%,ip%(4)
-LOCAL exist%,addr%(4),scheme$(6),addr$(15),octet%,mask$(15),hmask$(15),menu$(200),addrs,addrs$(4),choice%,bit%,found%
+LOCAL exist%,addr%(4),scheme$(6),addr$(15),octet%,mask$(15),hmask$(15),menu$(200),addrs,addrs$(4),opt%,gwopt%,bit%,found%
 exist%=EXIST("A:IPSUBNET")
 IF exist%
  OPEN "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%,scheme$
@@ -104,11 +104,14 @@ DO
   menu$=menu$+",=gw  "+IPCALC$:(254)
   menu$=menu$+",=r1  "+IPCALC$:(253)
   menu$=menu$+",=r2  "+IPCALC$:(252)
+ ELSEIF scheme$="P-t-P"
+  menu$=menu$+",=r1 "+IPCALC$:(1)
+  menu$=menu$+",=r2 "+IPCALC$:(-2)
  ENDIF
  KEY
  DO
-  choice%=MENU(menu$)
-  IF choice%=1
+  opt%=MENU(menu$)
+  IF opt%=1
    IPINPUT:("IP address",addr$)
    octet%=1
    DO
@@ -116,73 +119,85 @@ DO
     octet%=octet%+1
    UNTIL octet%>4
    BREAK
-  ELSEIF choice%=2
-   IPINPUT:("Netmask",mask$)
-   masklen%=32
-   octet%=4
-   found%=0
-   DO
-    bit%=0
+  ELSEIF (opt%>=2) AND (opt%<=4)
+   IF opt%=2
+    IPINPUT:("Netmask",mask$)
+    masklen%=32
+    octet%=4
+    found%=0
     DO
-     found%=(ip%(octet%) AND INT(2**bit%))<>0
-     IF NOT(found%)
-      masklen%=masklen%-1
-      bit%=bit%+1
-     ENDIF
-    UNTIL found% OR (bit%>7)
-    octet%=octet%-1
-   UNTIL octet%<1
-   BREAK
-  ELSEIF choice%=3
-   IPINPUT:("Hostmask (Cisco)",hmask$)
-   masklen%=32
-   octet%=4
-   found%=0
-   DO
-    bit%=0
+     bit%=0
+     DO
+      found%=(ip%(octet%) AND INT(2**bit%))<>0
+      IF NOT(found%)
+       masklen%=masklen%-1
+       bit%=bit%+1
+      ENDIF
+     UNTIL found% OR (bit%>7)
+     octet%=octet%-1
+    UNTIL octet%<1
+   ELSEIF opt%=3
+    IPINPUT:("Hostmask (Cisco)",hmask$)
+    masklen%=32
+    octet%=4
+    found%=0
     DO
-     found%=(ip%(octet%) AND INT(2**bit%))=0
-     IF NOT(found%)
-      masklen%=masklen%-1
-      bit%=bit%+1
-     ENDIF
-    UNTIL found% OR (bit%>7)
-    octet%=octet%-1
-   UNTIL octet%<1
+     bit%=0
+     DO
+      found%=(ip%(octet%) AND INT(2**bit%))=0
+      IF NOT(found%)
+       masklen%=masklen%-1
+       bit%=bit%+1
+      ENDIF
+     UNTIL found% OR (bit%>7)
+     octet%=octet%-1
+    UNTIL octet%<1
+   ELSEIF opt%=4
+    PRINT "Netmask length"+CHR$(63)
+    INPUT masklen%
+    masklen%=MIN(MAX(masklen%,0),32)
+   ENDIF
+   IF (masklen%=30) AND (scheme$<>"P-t-P")
+    CLS
+    PRINT "Gateway scheme set"
+    PRINT "to ""P-t-P""."
+    scheme$="P-t-P"
+    PAUSE -20
+   ENDIF
    BREAK
-  ELSEIF choice%=4
-   PRINT "Netmask length"+CHR$(63)
-   INPUT masklen%
-   masklen%=MIN(MAX(masklen%,0),32)
-   BREAK
-  ELSEIF choice%=7
+  ELSEIF opt%=7
    PRINT "Gateway scheme"+CHR$(63)
-   choice%=MENUN(2,"Top,Bottom,62,Alt-62,Bottop,254,None")
-   IF choice%=1
-    scheme$="Top"
-   ELSEIF choice%=2
-    scheme$="Bottom"
-   ELSEIF choice%=3
+   gwopt%=MENUN(2,"62,Top,Bottom,254,Alt-62,Bottop,P-t-P,None")
+   IF gwopt%=1
     scheme$="62"
-   ELSEIF choice%=4
-    scheme$="Alt-62"
-   ELSEIF choice%=5
-    scheme$="Bottop"
-   ELSEIF choice%=6
+   ELSEIF gwopt%=2
+    scheme$="Top"
+   ELSEIF gwopt%=3
+    scheme$="Bottom"
+   ELSEIF gwopt%=4
     scheme$="254"
-   ELSEIF choice%=7
+   ELSEIF gwopt%=5
+    scheme$="Alt-62"
+   ELSEIF gwopt%=6
+    scheme$="Bottop"
+   ELSEIF gwopt%=7
+    scheme$="P-t-P"
+    IF masklen%<>30
+     PRINT "Netmask length set"
+     PRINT "to /30."
+     masklen%=30
+     PAUSE -20
+    ENDIF
+   ELSEIF gwopt%=8
     scheme$="No"
    ENDIF
-   IF choice%>0
-    BREAK
-   ENDIF
-   choice%=7
-  ELSEIF choice%<>0
+   BREAK
+  ELSEIF opt%<>0
    PRINT "Not editable."
    PAUSE -10
   ENDIF
- UNTIL choice%=0
-UNTIL choice%=0
+ UNTIL opt%=0
+UNTIL opt%=0
 IF exist%
  OPEN "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%,scheme$
 ELSE
