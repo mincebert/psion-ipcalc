@@ -1,7 +1,8 @@
 IPINPUT:(prompt$,default$)
-REM 1.22 2016-12-16
+REM 1.31 2017-02-04
 LOCAL ip$(15),octet%,dot%
 inloop::
+CLS
 PRINT prompt$;CHR$(63)
 KSTAT 3
 ip$=default$
@@ -11,7 +12,10 @@ DO
  dot%=LOC(ip$,".")
  IF dot%>0
   ONERR inerr::
-  ip%(octet%)=MIN(MAX(VAL(LEFT$(ip$,dot%-1)),0),255)
+  ip%(octet%)=VAL(LEFT$(ip$,dot%-1))
+  IF ip%(octet%)<0 OR ip%(octet%)>255
+   RAISE 252
+  ENDIF
   ONERR OFF
   IF dot%<LEN(ip$)
    ip$=RIGHT$(ip$,LEN(ip$)-dot%)
@@ -30,7 +34,10 @@ RETURN
 inerr::
 ONERR OFF
 IF ERR=252
- PRINT "Error: invalid IP."
+ CLS
+ PRINT "Error: invalid"
+ PRINT "address/mask.";CHR$(16)
+ PAUSE -20
 ELSE
  RAISE ERR
 ENDIF
