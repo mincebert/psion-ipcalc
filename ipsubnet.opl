@@ -1,5 +1,5 @@
 IPSUBNET:
-REM 0.5 2017-02-04
+REM 0.51 2017-02-04
 GLOBAL net%(4),mask%(4),masklen%,ip%(4)
 LOCAL exist%,addr%(4),router$(6),addr$(15),octet%,mask$(15),hmask$(15),menu$(200),addrs,addrs$(4),opt%,rtropt%,bit%,found%
 exist%=EXIST("A:IPSUBNET")
@@ -23,7 +23,7 @@ ENDIF
 DO
  CLS
  PRINT "Busy..."
- PRINT CHR$(91);"-------";CHR$(93)
+ PRINT CHR$(91);"--------";CHR$(93)
  AT 2,2
  PRINT "I";
  addr$=IPSTR$:(addr%(1),addr%(2),addr%(3),addr%(4))
@@ -74,13 +74,14 @@ DO
  menu$=menu$+",=net "+IPSTR$:(net%(1),net%(2),net%(3),net%(4))
  PRINT "B";
  menu$=menu$+",=b/c "+IPCALC$:(-1)
- PRINT "G";
+ PRINT "R";
  menu$=menu$+",Rtr "
  IF router$="No"
   menu$=menu$+"no scheme"
  ELSE
   menu$=menu$+""""+router$+""" scheme"
  ENDIF
+ PRINT "G";
  IF router$="Top"
   menu$=menu$+",=gw  "+IPCALC$:(-2)
   menu$=menu$+",=r1  "+IPCALC$:(-3)
