@@ -1,16 +1,16 @@
 IPSUBNET:
-REM 0.49 2017-01-07
+REM 0.5 2017-02-04
 GLOBAL net%(4),mask%(4),masklen%,ip%(4)
-LOCAL exist%,addr%(4),scheme$(6),addr$(15),octet%,mask$(15),hmask$(15),menu$(200),addrs,addrs$(4),opt%,gwopt%,bit%,found%
+LOCAL exist%,addr%(4),router$(6),addr$(15),octet%,mask$(15),hmask$(15),menu$(200),addrs,addrs$(4),opt%,rtropt%,bit%,found%
 exist%=EXIST("A:IPSUBNET")
 IF exist%
- OPEN "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%,scheme$
+ OPEN "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%,router$
  addr%(1)=A.addr1%
  addr%(2)=A.addr2%
  addr%(3)=A.addr3%
  addr%(4)=A.addr4%
  masklen%=A.masklen%
- scheme$=A.scheme$
+ router$=A.router$
  CLOSE
 ELSE
  addr%(1)=192
@@ -18,15 +18,17 @@ ELSE
  addr%(3)=100
  addr%(4)=1
  masklen%=23
- scheme$="Top"
+ router$="Top"
 ENDIF
 DO
  CLS
- PRINT "Busy... ";CHR$(91);"-------";CHR$(93)
- AT 10,1
+ PRINT "Busy..."
+ PRINT CHR$(91);"-------";CHR$(93)
+ AT 2,2
+ PRINT "I";
  addr$=IPSTR$:(addr%(1),addr%(2),addr%(3),addr%(4))
  menu$="IP   "+addr$
- PRINT "I";
+ PRINT "M";
  octet%=1
  DO
   IF masklen%>=(octet%*8)
@@ -40,7 +42,7 @@ DO
  UNTIL octet%>4
  mask$=IPSTR$:(mask%(1),mask%(2),mask%(3),mask%(4))
  menu$=menu$+",Mask "+mask$
- PRINT "M";
+ PRINT "H";
  octet%=1
  DO
   ip%(octet%)=255-mask%(octet%)
@@ -48,7 +50,7 @@ DO
  UNTIL octet%>4
  hmask$=IPSTR$:(ip%(1),ip%(2),ip%(3),ip%(4))
  menu$=menu$+",Hmsk "+hmask$
- PRINT "H";
+ PRINT "L";
  addrs=2.0**(32-masklen%)
  IF addrs>1E9
   addrs$=GEN$(INT(addrs/1E9),3)+"B"
@@ -63,48 +65,47 @@ DO
  IF addrs>1
   menu$=menu$+"s"
  ENDIF
- PRINT "L";
+ PRINT "N";
  octet%=1
  DO
   net%(octet%)=addr%(octet%) AND mask%(octet%)
   octet%=octet%+1
  UNTIL octet%>4
  menu$=menu$+",=net "+IPSTR$:(net%(1),net%(2),net%(3),net%(4))
- PRINT "N";
- menu$=menu$+",=b/c "+IPCALC$:(-1)
  PRINT "B";
- menu$=menu$+",Gw   "
- IF scheme$="No"
+ menu$=menu$+",=b/c "+IPCALC$:(-1)
+ PRINT "G";
+ menu$=menu$+",Rtr "
+ IF router$="No"
   menu$=menu$+"no scheme"
  ELSE
-  menu$=menu$+""""+scheme$+""" scheme"
+  menu$=menu$+""""+router$+""" scheme"
  ENDIF
- PRINT "G";
- IF scheme$="Top"
+ IF router$="Top"
   menu$=menu$+",=gw  "+IPCALC$:(-2)
   menu$=menu$+",=r1  "+IPCALC$:(-3)
   menu$=menu$+",=r2  "+IPCALC$:(-4)
- ELSEIF scheme$="Bottom"
+ ELSEIF router$="Bottom"
   menu$=menu$+",=gw  "+IPCALC$:(1)
   menu$=menu$+",=r1  "+IPCALC$:(2)
   menu$=menu$+",=r2  "+IPCALC$:(3)
- ELSEIF scheme$="62"
+ ELSEIF router$="62"
   menu$=menu$+",=gw  "+IPCALC$:(62)
   menu$=menu$+",=r1  "+IPCALC$:(-2)
   menu$=menu$+",=r2  "+IPCALC$:(61)
- ELSEIF scheme$="Alt-62"
+ ELSEIF router$="Alt-62"
   menu$=menu$+",=gw  "+IPCALC$:(62)
   menu$=menu$+",=r1  "+IPCALC$:(-2)
   menu$=menu$+",=r2  "+IPCALC$:(-3)
- ELSEIF scheme$="Bottop"
+ ELSEIF router$="Bottop"
   menu$=menu$+",=gw  "+IPCALC$:(1)
   menu$=menu$+",=r1  "+IPCALC$:(-2)
   menu$=menu$+",=r2  "+IPCALC$:(-3)
- ELSEIF scheme$="254"
+ ELSEIF router$="254"
   menu$=menu$+",=gw  "+IPCALC$:(254)
   menu$=menu$+",=r1  "+IPCALC$:(253)
   menu$=menu$+",=r2  "+IPCALC$:(252)
- ELSEIF scheme$="P-t-P"
+ ELSEIF router$="P-t-P"
   menu$=menu$+",=r1 "+IPCALC$:(1)
   menu$=menu$+",=r2 "+IPCALC$:(-2)
  ENDIF
@@ -137,7 +138,7 @@ DO
      octet%=octet%-1
     UNTIL octet%<1
    ELSEIF opt%=3
-    IPINPUT:("Hostmask (Cisco)",hmask$)
+    IPINPUT:("Hostmask",hmask$)
     masklen%=32
     octet%=4
     found%=0
@@ -153,43 +154,51 @@ DO
      octet%=octet%-1
     UNTIL octet%<1
    ELSEIF opt%=4
-    PRINT "Netmask length"+CHR$(63)
-    INPUT masklen%
-    masklen%=MIN(MAX(masklen%,0),32)
+    DO
+     CLS
+     PRINT "Netmask length"+CHR$(63)
+     INPUT masklen%
+     IF (masklen%<0) OR (masklen%>32)
+      CLS
+      PRINT "Error: masklen"
+      PRINT "out of range.";CHR$(16)
+      PAUSE -20
+     ENDIF
+    UNTIL (masklen%>=0) AND (masklen%<=32)
    ENDIF
-   IF (masklen%=30) AND (scheme$<>"P-t-P")
+   IF (masklen%=30) AND (router$<>"P-t-P")
     CLS
-    PRINT "Gateway scheme set"
-    PRINT "to ""P-t-P""."
-    scheme$="P-t-P"
+    PRINT "Gateway scheme"
+    PRINT "set to ""P-t-P""."
+    router$="P-t-P"
     PAUSE -20
    ENDIF
    BREAK
   ELSEIF opt%=7
    PRINT "Gateway scheme"+CHR$(63)
-   gwopt%=MENUN(2,"62,Top,Bottom,254,Alt-62,Bottop,P-t-P,None")
-   IF gwopt%=1
-    scheme$="62"
-   ELSEIF gwopt%=2
-    scheme$="Top"
-   ELSEIF gwopt%=3
-    scheme$="Bottom"
-   ELSEIF gwopt%=4
-    scheme$="254"
-   ELSEIF gwopt%=5
-    scheme$="Alt-62"
-   ELSEIF gwopt%=6
-    scheme$="Bottop"
-   ELSEIF gwopt%=7
-    scheme$="P-t-P"
+   rtropt%=MENUN(2,"62,Alt-62,254,Top,Bottom,Bottop,P-t-P,None")
+   IF rtropt%=1
+    router$="62"
+   ELSEIF rtropt%=2
+    router$="Alt-62"
+   ELSEIF rtropt%=3
+    router$="254"
+   ELSEIF rtropt%=4
+    router$="Top"
+   ELSEIF rtropt%=5
+    router$="Bottom"
+   ELSEIF rtropt%=6
+    router$="Bottop"
+   ELSEIF rtropt%=7
+    router$="P-t-P"
     IF masklen%<>30
-     PRINT "Netmask length set"
-     PRINT "to /30."
+     PRINT "Netmask length"
+     PRINT "set to /30."
      masklen%=30
      PAUSE -20
     ENDIF
-   ELSEIF gwopt%=8
-    scheme$="No"
+   ELSEIF rtropt%=8
+    router$="No"
    ENDIF
    BREAK
   ELSEIF opt%<>0
@@ -199,16 +208,16 @@ DO
  UNTIL opt%=0
 UNTIL opt%=0
 IF exist%
- OPEN "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%,scheme$
+ OPEN "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%,router$
 ELSE
- CREATE "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%,scheme$
+ CREATE "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%,router$
 ENDIF
 A.addr1%=addr%(1)
 A.addr2%=addr%(2)
 A.addr3%=addr%(3)
 A.addr4%=addr%(4)
 A.masklen%=masklen%
-A.scheme$=scheme$
+A.router$=router$
 IF exist%
  UPDATE
 ELSE
