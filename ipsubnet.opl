@@ -1,5 +1,5 @@
 IPSUBNET:
-REM 0.51 2017-02-04
+REM 0.52 2017-02-04
 GLOBAL net%(4),mask%(4),masklen%,ip%(4)
 LOCAL exist%,addr%(4),router$(6),addr$(15),octet%,mask$(15),hmask$(15),menu$(200),addrs,addrs$(4),opt%,rtropt%,bit%,found%
 exist%=EXIST("A:IPSUBNET")
@@ -176,7 +176,7 @@ DO
    ENDIF
    BREAK
   ELSEIF opt%=7
-   PRINT "Gateway scheme"+CHR$(63)
+   PRINT "Router scheme"+CHR$(63)
    rtropt%=MENUN(2,"62,Alt-62,254,Top,Bottom,Bottop,P-t-P,None")
    IF rtropt%=1
     router$="62"
