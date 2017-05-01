@@ -1,7 +1,7 @@
 IPSUBNET:
-REM 0.54 2017-05-01
+REM 0.54-xp 2017-05-01
 GLOBAL net%(4),mask%(4),masklen%,ip%(4)
-LOCAL exist%,addr%(4),router$(6),addr$(15),menu$(220),octet%,mask$(15),hmask$(15),hexaddr$(8),addrs,addrs$(4),opt%,rtropt%,bit%,found%
+LOCAL exist%,addr%(4),router$(6),addr$(15),menu$(176),octet%,mask$(15),hmask$(15),hexaddr$(8),addrs,addrs$(4),opt%,rtropt%,bit%,found%
 exist%=EXIST("A:IPSUBNET")
 IF exist%
  OPEN "A:IPSUBNET",A,addr1%,addr2%,addr3%,addr4%,masklen%,router$
@@ -27,7 +27,7 @@ DO
  AT 2,2
  PRINT "I";
  addr$=IPSTR$:(addr%(1),addr%(2),addr%(3),addr%(4))
- menu$="IP   "+addr$
+ menu$="I"+addr$
  PRINT "M";
  octet%=1
  DO
@@ -41,7 +41,7 @@ DO
   octet%=octet%+1
  UNTIL octet%>4
  mask$=IPSTR$:(mask%(1),mask%(2),mask%(3),mask%(4))
- menu$=menu$+",Mask "+mask$
+ menu$=menu$+",M"+mask$
  PRINT "H";
  octet%=1
  DO
@@ -49,7 +49,7 @@ DO
   octet%=octet%+1
  UNTIL octet%>4
  hmask$=IPSTR$:(ip%(1),ip%(2),ip%(3),ip%(4))
- menu$=menu$+",Hmsk "+hmask$
+ menu$=menu$+",H"+hmask$
  PRINT "L";
  addrs=2.0**(32-masklen%)
  IF addrs>1E9
@@ -61,7 +61,7 @@ DO
  ELSE
   addrs$=GEN$(INT(addrs+0.5),4)
  ENDIF
- menu$=menu$+",Len  /"+GEN$(masklen%,2)+"  "+addrs$+" addr"
+ menu$=menu$+",L/"+GEN$(masklen%,2)+":"+addrs$+"-addr"
  IF addrs>1
   menu$=menu$+"s"
  ENDIF
@@ -71,47 +71,47 @@ DO
   net%(octet%)=addr%(octet%) AND mask%(octet%)
   octet%=octet%+1
  UNTIL octet%>4
- menu$=menu$+",=net "+IPSTR$:(net%(1),net%(2),net%(3),net%(4))
+ menu$=menu$+",="+IPSTR$:(net%(1),net%(2),net%(3),net%(4))
  PRINT "B";
- menu$=menu$+",=b/c "+IPCALC$:(-1)
+ menu$=menu$+",*"+IPCALC$:(-1)
  PRINT "X";
  hexaddr$=IHXSTR$:(addr%(1),addr%(2),addr%(3),addr%(4))
- menu$=menu$+",Xhex "+hexaddr$
+ menu$=menu$+","+"X"+hexaddr$
  PRINT "R";
- menu$=menu$+",Rtr "
+ menu$=menu$+",R"
  IF router$="No"
-  menu$=menu$+"no scheme"
+  menu$=menu$+"no-scheme"
  ELSE
-  menu$=menu$+""""+router$+""" scheme"
+  menu$=menu$+""""+router$+"""-scheme"
  ENDIF
  PRINT "G";
  IF router$="Top"
-  menu$=menu$+",=gw  "+IPCALC$:(-2)
-  menu$=menu$+",=r1  "+IPCALC$:(-3)
-  menu$=menu$+",=r2  "+IPCALC$:(-4)
+  menu$=menu$+",-"+IPCALC$:(-2)
+  menu$=menu$+",<"+IPCALC$:(-3)
+  menu$=menu$+",>"+IPCALC$:(-4)
  ELSEIF router$="Bottom"
-  menu$=menu$+",=gw  "+IPCALC$:(1)
-  menu$=menu$+",=r1  "+IPCALC$:(2)
-  menu$=menu$+",=r2  "+IPCALC$:(3)
+  menu$=menu$+",-"+IPCALC$:(1)
+  menu$=menu$+",<"+IPCALC$:(2)
+  menu$=menu$+",>"+IPCALC$:(3)
  ELSEIF router$="62"
-  menu$=menu$+",=gw  "+IPCALC$:(62)
-  menu$=menu$+",=r1  "+IPCALC$:(-2)
-  menu$=menu$+",=r2  "+IPCALC$:(61)
+  menu$=menu$+",-"+IPCALC$:(62)
+  menu$=menu$+",<"+IPCALC$:(-2)
+  menu$=menu$+",>"+IPCALC$:(61)
  ELSEIF router$="Alt-62"
-  menu$=menu$+",=gw  "+IPCALC$:(62)
-  menu$=menu$+",=r1  "+IPCALC$:(-2)
-  menu$=menu$+",=r2  "+IPCALC$:(-3)
+  menu$=menu$+",-"+IPCALC$:(62)
+  menu$=menu$+",<"+IPCALC$:(-2)
+  menu$=menu$+",>"+IPCALC$:(-3)
  ELSEIF router$="Bottop"
-  menu$=menu$+",=gw  "+IPCALC$:(1)
-  menu$=menu$+",=r1  "+IPCALC$:(-2)
-  menu$=menu$+",=r2  "+IPCALC$:(-3)
+  menu$=menu$+",-"+IPCALC$:(1)
+  menu$=menu$+",<"+IPCALC$:(-2)
+  menu$=menu$+",>"+IPCALC$:(-3)
  ELSEIF router$="254"
-  menu$=menu$+",=gw  "+IPCALC$:(254)
-  menu$=menu$+",=r1  "+IPCALC$:(253)
-  menu$=menu$+",=r2  "+IPCALC$:(252)
+  menu$=menu$+",-"+IPCALC$:(254)
+  menu$=menu$+",<"+IPCALC$:(253)
+  menu$=menu$+",>"+IPCALC$:(252)
  ELSEIF router$="P-t-P"
-  menu$=menu$+",=r1 "+IPCALC$:(1)
-  menu$=menu$+",=r2 "+IPCALC$:(-2)
+  menu$=menu$+",<"+IPCALC$:(1)
+  menu$=menu$+",>"+IPCALC$:(-2)
  ENDIF
  KEY
  DO
@@ -187,8 +187,7 @@ DO
    UNTIL octet%>4
    BREAK
   ELSEIF opt%=8
-   PRINT "Router scheme"+CHR$(63)
-   rtropt%=MENUN(2,"62,Alt-62,254,Top,Bottom,Bottop,P-t-P,None")
+   rtropt%=MENU("62,Alt-62,254,Top,Bottom,Bottop,P-t-P,None")
    IF rtropt%=1
     router$="62"
    ELSEIF rtropt%=2

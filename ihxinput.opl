@@ -1,0 +1,52 @@
+IHXINPUT:(prompt$,default$)
+REM 1.00 2017-05-01
+LOCAL digits$(22),hexip$(16),ip$(15),octet%,nibble%
+digits$="0123456789ABCDEF<>()%/"
+inloop::
+CLS
+PRINT prompt$;CHR$(63)
+KSTAT 3
+hexip$=default$
+EDIT hexip$
+hexip$=UPPER$(hexip$)
+octet%=1
+DO
+ ONERR inerr::
+ IF LEN(hexip$)>=2
+  nibble%=LOC(digits$,LEFT$(hexip$,1))-1
+  IF nibble%>=16
+   nibble%=nibble%-6
+  ENDIF
+  IF nibble%>=0
+   ip%(octet%)=nibble%*16
+  ELSE
+   RAISE 252
+  ENDIF
+  nibble%=LOC(digits$,MID$(hexip$,2,1))-1
+  IF nibble%>=16
+   nibble%=nibble%-6
+  ENDIF
+  IF nibble%>=0
+   ip%(octet%)=ip%(octet%)+nibble%
+  ELSE
+   RAISE 252
+  ENDIF
+  ONERR OFF
+  hexip$=RIGHT$(hexip$,LEN(hexip$)-2)
+ ELSE
+  ip%(octet%)=0
+ ENDIF
+ octet%=octet%+1
+UNTIL octet%>4
+RETURN
+inerr::
+ONERR OFF
+IF ERR=252
+ CLS
+ PRINT "Error: invalid"
+ PRINT "hex address.";CHR$(16)
+ PAUSE -20
+ELSE
+ RAISE ERR
+ENDIF
+GOTO inloop::
